@@ -29,7 +29,6 @@ export const getUrl = async (req: Request, res: Response) => {
     });
 
     const responseUrl = url[0]["@response"]
-
     responseUrl ? res.redirect(301, responseUrl) : res.status(404).send();
 
   } catch (error) {
@@ -71,6 +70,7 @@ export const postUrl = async (req: Request, res: Response) => {
     try {
 
       let url: BaseUrl = req.body;
+
       if(authHeader){
         const token = authHeader.split(' ')[1];
         const decoded = await jwt.verify(token, stringHelper.jwtSecret);  
@@ -79,16 +79,21 @@ export const postUrl = async (req: Request, res: Response) => {
     
     !urlRegex.test(url.long_url) ? url.long_url = stringHelper.http + url.long_url : url.long_url
 
-    const data = queryParameters(url, process.env.HOST, userId)
+    let data :any;
+    let result : Url[] 
+
+    do {
+        data = queryParameters(url, process.env.HOST, userId)
+        result = (await execute<Url[]>(UrlQueries.GetCode, [data.code]))
+    }while (result.length != 0 );
 
     await execute<{ affectedRows: number }>(UrlQueries.AddURL, [data.short_url, data.code, data.long_url, data.userId, data.create, data.update]);
     
     res.status(201).json(data);
 
   } catch (e) {
-
-    res.status(500).json({message: stringHelper.createUrl});
-
+    console.log(e)
+    res.status(500).json({error: stringHelper.createUrl, message : e});
   }
 }
 
@@ -97,7 +102,7 @@ export const putUrl = async (req: Request, res: Response, next : NextFunction) =
     let url: BaseUrl = req.body;
 
     const v = new niv.Validator(url, {
-      'url_code': 'uniqueCode|required|string|maxLength:10'
+      'url_code': 'uniqueCode|required|string|maxLength:10|minLength:5'
     })
 
     niv.extend('uniqueCode', async ( url_code:any) => {
@@ -111,7 +116,7 @@ export const putUrl = async (req: Request, res: Response, next : NextFunction) =
     const matched = await v.check()
     
     if (!matched) {
-       res.status(401).send(v.errors)
+       return res.status(401).send(v.errors)
        next()
     }
 

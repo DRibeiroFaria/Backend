@@ -64,13 +64,13 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
     const storedUser = await execute<User[]>(UserQueries.FindUser, [user.email])
 
     if (storedUser.length !== 1) {
-      return res.status(401).send(stringHelper.userNotFound)
+      return res.status(401).json({"error": stringHelper.userNotFound})
     }
 
     const isEqual = await bcrypt.compare(user.pass, storedUser[0].pass);
 
     if (!isEqual) {
-      return res.status(401).send(stringHelper.wrongPassword)
+      return res.status(401).json({"error": stringHelper.wrongPassword})
     }
 
     const token = jwt.sign(

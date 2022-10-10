@@ -9,7 +9,7 @@ export = async (req : Request, res : Response, next: NextFunction) => {
  const authHeader = req.get("Authorization");
  
  if(!authHeader){
-    throw errorHandler(new HttpException(401, HttpError.http401), req, res, next)
+   return res.status(401).json({"error":HttpError.http401})
  }
 
  const token = authHeader.split(' ')[1];
@@ -22,7 +22,7 @@ export = async (req : Request, res : Response, next: NextFunction) => {
  }
 
  if (!decToken) {
-    throw errorHandler(new HttpException(401, HttpError.http401), req, res, next)
+    return res.status(401).json({"error":HttpError.http401})
  }
 
 next();
