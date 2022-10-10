@@ -1,6 +1,5 @@
 # Backend
 Shortening Service Backend
-First S
 
 # 1.Intall packages 
  npm i 
